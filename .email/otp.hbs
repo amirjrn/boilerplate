@@ -1,0 +1,118 @@
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>Alice OTP Verification</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        background-color: #f4f4f4;
+        color: #333333;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        background-color: #4a90e2; /* A soft blue for Alice theme */
+        padding: 40px 20px;
+        text-align: center;
+        color: #ffffff;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: bold;
+      }
+      .body {
+        padding: 40px 20px;
+        text-align: center;
+      }
+      .otp-box {
+        display: inline-block;
+        background-color: #f0f8ff;
+        border: 2px dashed #4a90e2;
+        border-radius: 8px;
+        padding: 20px 40px;
+        margin: 20px 0;
+        font-size: 36px;
+        font-weight: bold;
+        letter-spacing: 4px;
+        color: #4a90e2;
+      }
+      .instructions {
+        font-size: 16px;
+        line-height: 1.6;
+        margin: 20px 0;
+        color: #666666;
+      }
+      .footer {
+        background-color: #f4f4f4;
+        padding: 20px;
+        text-align: center;
+        font-size: 14px;
+        color: #999999;
+      }
+      .footer a {
+        color: #4a90e2;
+        text-decoration: none;
+      }
+      @media only screen and (max-width: 600px) {
+        .container {
+          width: 100%;
+        }
+        .otp-box {
+          font-size: 28px;
+          padding: 15px 30px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <table
+      cellpadding='0'
+      cellspacing='0'
+      border='0'
+      width='100%'
+      style='background-color: #f4f4f4; padding: 20px 0;'
+    >
+      <tr>
+        <td align='center'>
+          <div class='container'>
+            <div class='header'>
+              <h1>Welcome to Alice</h1>
+            </div>
+            <div class='body'>
+              <!-- Handlebars will replace this -->
+              <h2>Your One-Time Password (OTP)</h2>
+              <div class='otp-box'>{{otp}}</div>
+              <p class='instructions'>Hello! To complete your verification,
+                please use the above OTP code or simply click on following
+                button. This code is valid for the next 5 minutes.</p>
+              <a
+                href='https://verify.appalice.com/verify?otp={{otp}}&email={{email}}'
+                target='_blank'
+                style='background-color: #4a90e2; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px;'
+              >Click here to verify</a>
+              <p class='instructions'>If you didn't request this, please ignore
+                this email or contact support.<br />Do not share this code with
+                anyone for security reasons.</p>
+            </div>
+            <div class='footer'>
+              &copy; 2025 Alice App. All rights reserved.<br />
+              <a href='https://www.aliceapp.com'>Visit our website</a>
+              |
+              <a href='https://www.aliceapp.com/support'>Contact Support</a>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

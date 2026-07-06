@@ -1,0 +1,206 @@
+name: Deploy to DigitalOcean Droplets
+
+on:
+  push:
+    branches: [main]
+
+env:
+  IMAGE_NAME: bob
+  REGISTRY: registry.digitalocean.com/bob-registry-fra1
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to DigitalOcean Container Registry
+        run: |
+          docker login registry.digitalocean.com --username ${{ secrets.DO_REGISTRY_EMAIL }} --password ${{ secrets.DO_REGISTRY_TOKEN }}
+
+      - name: Remove old Docker images
+        run: |
+          docker images --filter "reference=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" --format "{{.ID}} {{.CreatedAt}}" \
+          | sort -k2 -r \
+          | awk 'NR>1 {print $1}' \
+          | xargs -r docker rmi
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+  deploy-eu:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy docker-compose file
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DROPLET_IP_EU }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.INFRA_PRIVATE_KEY }}
+          source: 'docker-compose.prod.yml'
+          target: '.'
+
+      - name: Deploy to Europe Droplet
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          DO_REGISTRY_TOKEN: ${{ secrets.DO_REGISTRY_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_HOST: ${{ secrets.REDIS_HOST }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          FULL_IMAGE_NAME: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        with:
+          host: ${{ secrets.DROPLET_IP_EU }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.INFRA_PRIVATE_KEY }}
+          envs: DO_REGISTRY_TOKEN,DATABASE_URL,REDIS_HOST,REDIS_PORT,REDIS_PASSWORD,FULL_IMAGE_NAME
+          script: |
+            docker login registry.digitalocean.com --username "$DO_REGISTRY_TOKEN" --password "$DO_REGISTRY_TOKEN"
+
+            export IMAGE_NAME=$FULL_IMAGE_NAME
+            export DATABASE_URL=$DATABASE_URL
+            export REDIS_HOST=$REDIS_HOST
+            export REDIS_PORT=$REDIS_PORT
+            export REDIS_PASSWORD=$REDIS_PASSWORD
+
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
+            docker image prune -f
+
+  deploy-na:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy docker-compose file
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DROPLET_IP_NA }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.INFRA_PRIVATE_KEY }}
+          source: 'docker-compose.prod.yml'
+          target: '.'
+
+      - name: Deploy to North America Droplet
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          DO_REGISTRY_TOKEN: ${{ secrets.DO_REGISTRY_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_HOST: ${{ secrets.REDIS_HOST }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          FULL_IMAGE_NAME: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        with:
+          host: ${{ secrets.DROPLET_IP_NA }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.INFRA_PRIVATE_KEY }}
+          envs: DO_REGISTRY_TOKEN,DATABASE_URL,REDIS_HOST,REDIS_PORT,REDIS_PASSWORD,FULL_IMAGE_NAME
+          script: |
+            docker login registry.digitalocean.com --username "$DO_REGISTRY_TOKEN" --password "$DO_REGISTRY_TOKEN"
+
+            export IMAGE_NAME=$FULL_IMAGE_NAME
+            export DATABASE_URL=$DATABASE_URL
+            export REDIS_HOST=$REDIS_HOST
+            export REDIS_PORT=$REDIS_PORT
+            export REDIS_PASSWORD=$REDIS_PASSWORD
+
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
+            docker image prune -f
+
+  deploy-asia:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy docker-compose file
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DROPLET_IP_ASIA }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.INFRA_PRIVATE_KEY }}
+          source: 'docker-compose.prod.yml'
+          target: '.'
+
+      - name: Deploy to Asia Droplet
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          DO_REGISTRY_TOKEN: ${{ secrets.DO_REGISTRY_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_HOST: ${{ secrets.REDIS_HOST }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          FULL_IMAGE_NAME: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        with:
+          host: ${{ secrets.DROPLET_IP_ASIA }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.INFRA_PRIVATE_KEY }}
+          envs: DO_REGISTRY_TOKEN,DATABASE_URL,REDIS_HOST,REDIS_PORT,REDIS_PASSWORD,FULL_IMAGE_NAME
+          script: |
+            docker login registry.digitalocean.com --username "$DO_REGISTRY_TOKEN" --password "$DO_REGISTRY_TOKEN"
+
+            export IMAGE_NAME=$FULL_IMAGE_NAME
+            export DATABASE_URL=$DATABASE_URL
+            export REDIS_HOST=$REDIS_HOST
+            export REDIS_PORT=$REDIS_PORT
+            export REDIS_PASSWORD=$REDIS_PASSWORD
+
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
+            docker image prune -f
+
+  deploy-au:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy docker-compose file
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DROPLET_IP_AU }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.INFRA_PRIVATE_KEY }}
+          source: 'docker-compose.prod.yml'
+          target: '.'
+
+      - name: Deploy to Australia Droplet
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          DO_REGISTRY_TOKEN: ${{ secrets.DO_REGISTRY_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_HOST: ${{ secrets.REDIS_HOST }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          FULL_IMAGE_NAME: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        with:
+          host: ${{ secrets.DROPLET_IP_AU }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.INFRA_PRIVATE_KEY }}
+          envs: DO_REGISTRY_TOKEN,DATABASE_URL,REDIS_HOST,REDIS_PORT,REDIS_PASSWORD,FULL_IMAGE_NAME
+          script: |
+            docker login registry.digitalocean.com --username "$DO_REGISTRY_TOKEN" --password "$DO_REGISTRY_TOKEN"
+
+            export IMAGE_NAME=$FULL_IMAGE_NAME
+            export DATABASE_URL=$DATABASE_URL
+            export REDIS_HOST=$REDIS_HOST
+            export REDIS_PORT=$REDIS_PORT
+            export REDIS_PASSWORD=$REDIS_PASSWORD
+
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
+            docker image prune -f

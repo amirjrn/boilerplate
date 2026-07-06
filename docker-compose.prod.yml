@@ -1,0 +1,61 @@
+version: '3.8'
+
+# =============================================================================
+# PRODUCTION DOCKER COMPOSE
+# =============================================================================
+# Uses:
+# - DigitalOcean Managed PostgreSQL (Frankfurt) - centralized database
+# - DigitalOcean Managed Valkey (Frankfurt) - OTP storage (cross-region consistent)
+# - Local Redis (per-droplet) - Prisma query caching (ultra-low latency)
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Local Redis Cache (for Prisma query caching)
+  # ---------------------------------------------------------------------------
+  # Each droplet has its own Redis for ultra-fast query caching (~1ms).
+  # This is NOT used for OTP - OTP uses managed Valkey for consistency.
+  # ---------------------------------------------------------------------------
+  redis-cache:
+    image: redis:7-alpine
+    restart: always
+    command: redis-server --appendonly no --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # API Service
+  # ---------------------------------------------------------------------------
+  api:
+    image: ${IMAGE_NAME}
+    restart: always
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      # PostgreSQL (Frankfurt) - main database
+      - DATABASE_URL=${DATABASE_URL}
+      # Local Redis - for Prisma query caching (fast, ~1ms)
+      - REDIS_CACHE_HOST=redis-cache
+      - REDIS_CACHE_PORT=6379
+      # Managed Valkey (Frankfurt) - for OTP only (consistent across regions)
+      - REDIS_OTP_HOST=${REDIS_HOST}
+      - REDIS_OTP_PORT=${REDIS_PORT}
+      - REDIS_OTP_PASSWORD=${REDIS_PASSWORD}
+    depends_on:
+      redis-cache:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+# =============================================================================
+# ARCHITECTURE:
+# - Prisma caching → Local Redis (~1ms) - can have stale data, that's OK
+# - OTP storage → Managed Valkey (~100ms) - must be consistent across regions
+# =============================================================================

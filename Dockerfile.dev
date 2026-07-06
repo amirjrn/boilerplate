@@ -1,0 +1,25 @@
+FROM node:22-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+
+RUN npm install
+
+COPY prisma.config.ts ./
+COPY src/domain ./src/domain
+
+# Generate Prisma client in node_modules/@prisma/client
+# ARG is build-time only, won't override runtime .env
+ARG DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+RUN npx prisma generate
+
+COPY . .
+
+COPY scripts/migrations.sh /usr/local/bin/migrations.sh
+RUN chmod +x /usr/local/bin/migrations.sh 
+
+EXPOSE 3000
+ENTRYPOINT ["/usr/local/bin/migrations.sh"]
+
+CMD [ "npm", "run", "start:dev" ]

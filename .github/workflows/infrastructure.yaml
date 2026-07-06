@@ -1,0 +1,92 @@
+name: Infrastructure - Terraform Apply
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Terraform action to run'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+
+env:
+  TF_VAR_do_token: ${{ secrets.DO_API_TOKEN }}
+  TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_R2_TOKEN }}
+  TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+  TF_VAR_cloudflare_lb_hostname: ${{ secrets.CLOUDFLARE_LB_HOSTNAME }}
+  TF_VAR_cloudflare_notification_email: ${{ secrets.CLOUDFLARE_NOTIFICATION_EMAIL }}
+  TF_VAR_ssh_key_fingerprint: ${{ secrets.INFRA_PUBLIC_KEY_FINGERPRINT }}
+  TF_VAR_ssh_username: ${{ secrets.SSH_USER }}
+  TF_VAR_ssh_public_key: ${{ secrets.INFRA_PUBLIC_KEY }}
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        if: ${{ github.event.inputs.action == 'apply' }}
+        run: terraform apply -auto-approve tfplan
+
+      # Update GitHub Secrets with Terraform outputs
+      - name: Update GitHub Secrets
+        if: ${{ github.event.inputs.action == 'apply' }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          echo "Updating GitHub Secrets with Terraform outputs..."
+
+          # Droplet IPs
+          gh secret set DROPLET_IP_EU --body "$(terraform output -raw github_secret_DROPLET_IP_EU)" --repo ${{ github.repository }}
+          gh secret set DROPLET_IP_NA --body "$(terraform output -raw github_secret_DROPLET_IP_NA)" --repo ${{ github.repository }}
+          gh secret set DROPLET_IP_ASIA --body "$(terraform output -raw github_secret_DROPLET_IP_ASIA)" --repo ${{ github.repository }}
+          gh secret set DROPLET_IP_AU --body "$(terraform output -raw github_secret_DROPLET_IP_AU)" --repo ${{ github.repository }}
+
+          # Database
+          gh secret set DATABASE_URL --body "$(terraform output -raw github_secret_DATABASE_URL)" --repo ${{ github.repository }}
+
+          # Redis/Valkey
+          gh secret set REDIS_HOST --body "$(terraform output -raw github_secret_REDIS_HOST)" --repo ${{ github.repository }}
+          gh secret set REDIS_PORT --body "$(terraform output -raw github_secret_REDIS_PORT)" --repo ${{ github.repository }}
+          gh secret set REDIS_PASSWORD --body "$(terraform output -raw github_secret_REDIS_PASSWORD)" --repo ${{ github.repository }}
+
+          # PostgreSQL password (also included in DATABASE_URL, but available separately)
+          gh secret set POSTGRES_PASSWORD --body "$(terraform output -raw postgres_password)" --repo ${{ github.repository }}
+
+          echo "GitHub Secrets updated successfully!"
+
+          # Print summary (non-sensitive)
+          echo "=== INFRASTRUCTURE SUMMARY ==="
+          echo "EU Droplet: $(terraform output -raw github_secret_DROPLET_IP_EU)"
+          echo "NA Droplet: $(terraform output -raw github_secret_DROPLET_IP_NA)"
+          echo "Asia Droplet: $(terraform output -raw github_secret_DROPLET_IP_ASIA)"
+          echo "AU Droplet: $(terraform output -raw github_secret_DROPLET_IP_AU)"
+          echo "Redis Host: $(terraform output -raw github_secret_REDIS_HOST)"
+          echo "Redis Port: $(terraform output -raw github_secret_REDIS_PORT)"
+          echo "Redis Password: ******* (set from DO-generated value)"
+          echo "Postgres Password: ******* (set from DO-generated value)"
+          echo "Database URL: ******* (set from DO-generated value)"
+          echo "Load Balancer: $(terraform output -raw loadbalancer_hostname)"
+          echo "=============================="
