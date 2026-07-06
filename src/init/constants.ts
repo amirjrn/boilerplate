@@ -9,7 +9,7 @@ export { BCRYPT_SALT_SIZE, ACCESS_TOKEN_EXPIRY };
 //------------------------------------------------//
 //----------------Email/OTP Settings--------------//
 //------------------------------------------------//
-const EMAIL_SENDER = 'alice@appalice.com';
+const EMAIL_SENDER = 'boilerplate@appboilerplate.com';
 const OTP_MIN_VALUE = 100000;
 const OTP_MAX_VALUE = 1000000;
 const OTP_EXPIRY_SECONDS = 300; // 5 minutes
@@ -33,7 +33,7 @@ export {
 // NOTE: These values should ideally be in environment variables for security
 // Consider moving APPLE_KEY_ID, APPLE_CLIENT_ID, and APPLE_TEAM_ID to .env
 const APPLE_KEY_ID = 'V7SW4ZQ46G';
-const APPLE_CLIENT_ID = 'app.alice.learn';
+const APPLE_CLIENT_ID = 'app.boilerplate.learn';
 const APPLE_TEAM_ID = 'A98NTM7WMG';
 const APPLE_AUDIENCE = 'https://appleid.apple.com';
 const APPLE_TOKEN_URL = 'https://appleid.apple.com/auth/token';

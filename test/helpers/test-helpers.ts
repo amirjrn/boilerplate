@@ -103,7 +103,7 @@ export const mockAppleIdTokenPayload = {
   email_verified: true,
   iat: Math.floor(Date.now() / 1000),
   exp: Math.floor(Date.now() / 1000) + 3600,
-  aud: 'app.alice.learn',
+  aud: 'app.boilerplate.learn',
   iss: 'https://appleid.apple.com',
 };
 

@@ -33,8 +33,8 @@ async function bootstrap() {
   app.setGlobalPrefix('api/v1');
 
   const swagger = new DocumentBuilder()
-    .setTitle('Bob API')
-    .setDescription('The App which Alice uses to communicate with')
+    .setTitle('Boilerplate API')
+    .setDescription('The App which Boilerplate uses to communicate with')
     .setVersion('1.0')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, swagger);

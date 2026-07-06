@@ -1,6 +1,6 @@
 # Test Suite Documentation
 
-This directory contains comprehensive tests for the Bob application, including unit tests, integration tests, and end-to-end (E2E) tests.
+This directory contains comprehensive tests for the Boilerplate application, including unit tests, integration tests, and end-to-end (E2E) tests.
 
 ## Test Structure
 
@@ -34,7 +34,7 @@ Add to your `.env` file:
 
 ```env
 # Test database (separate from development)
-DATABASE_URL=postgresql://user:password@localhost:5432/bob_test
+DATABASE_URL=postgresql://user:password@localhost:5432/boilerplate_test
 
 # Required for tests
 ACCESS_TOKEN_SECRET=your-test-secret
