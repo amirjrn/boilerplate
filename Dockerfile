@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:22-bullseye-slim AS builder
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # --- Production Stage ---
-FROM node:22-alpine AS production
+FROM node:22-bullseye-slim AS production
 
 WORKDIR /app
 
